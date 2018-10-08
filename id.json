@@ -1,0 +1,10 @@
+{
+ "name":"simple .csv",
+ "interpreter":"Rscript",
+ "executable":"scsv.R",
+ "args":"",
+ "options":
+ {
+	 "csv file":"freetext" 
+ }
+}
