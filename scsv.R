@@ -1,4 +1,7 @@
 
+devnull <- file('/dev/null','w')
+sink(devnull,type = 'message')
+
 require(stringr)
 require(glue)
 
@@ -15,31 +18,22 @@ config <- readLines('stdin')%>%
 	fromJSON()%>%
 	suppressWarnings()
 
+sink(type = 'message')
+close(devnull)
+
 verbose <- (config[['verbose']] == 'y')
-print(verbose)
+rconf <- config[['redis']]
+key <- rconf[['listkey']]
+chunksize <- config[['chunksize']]
 
-key <- config[['redis']][['listkey']]%>%
-	unlist()
-
-chunksize <- config[['chunksize']]%>%
-	unlist()
-
-if(verbose){
-	writeLines(paste('working with',key),stderr())
-	writeLines(paste('chunksize:',chunksize),stderr())
-	}
 # Redis stuff ######################
 
-redis_config(host = config$redis$hostname,
-	     port = config$redis$port,
-	     db = config$redis$db)
-
-r <- hiredis()
+r <- hiredis(redis_config(db = rconf[['db']],
+                          port = rconf[['port']],
+                          host = rconf[['hostname']]))
 
 # Read data ########################
-print(getwd())
 dat <- read.csv(config[['csv file']],stringsAsFactors = FALSE)
-write.csv(dat,'tee.csv')
 
 if(verbose){
 	writeLines(paste('read',nrow(dat),'rows from',config[['csv file']]),
@@ -50,6 +44,6 @@ if(verbose){
 
 DBgratia::redisPutData(dat,r,
 		       key,chunksize, 
-		       verbose = verbose,
-		       sanitize = TRUE)
+		       verbose = verbose)
+		       
 
